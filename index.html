@@ -269,11 +269,6 @@
                 Calcular Transformada
             </button>
 
-            <button onclick="irAPasoAPaso()" class="boton-estilo">
-                <img src="https://cdn-icons-png.flaticon.com/512/2374/2374367.png" alt="pasos">
-                Ver paso a paso (MathDF)
-            </button>
-
             <button onclick="abrirModal()" class="boton-estilo">
                 <img src="https://cdn-icons-png.flaticon.com/512/471/471664.png" alt="info">
                 ¿Cómo ingresar funciones?
@@ -305,11 +300,6 @@
             <h3>3. Multiplicaciones</h3>
             <p>Usa siempre el asterisco <b>*</b> para indicar multiplicación, especialmente entre constantes y variables.</p>
             <span class="ejemplo-box">Ejemplo: 5*exp(-t) en lugar de 5exp(-t)</span>
-        </section>
-
-        <section>
-            <h3>4. Redirección a MathDF</h3>
-            <p>Te redirigimos a <b>MathDF</b> para el "paso a paso" debido a su motor especializado en la resolución detallada de transformadas.</p>
         </section>
 
         <div style="text-align: center; margin-top: 20px;">
@@ -346,7 +336,6 @@ function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    // Soporte para e^at
     e = e.replace(/e\^/g, 'exp');
     return e;
 }
@@ -364,11 +353,9 @@ function calcular() {
         let latex = "";
 
         if (tipo === 'normal') {
-            // Laplace Directa: f(t) -> F(s)
             resultadoNerdamer = nerdamer(`laplace(${f}, t, s)`);
             latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${resultadoNerdamer.toTeX()}`;
         } else {
-            // Laplace Inversa: F(s) -> f(t)
             resultadoNerdamer = nerdamer(`ilt(${f}, s, t)`);
             latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${resultadoNerdamer.toTeX()}`;
         }
@@ -379,16 +366,6 @@ function calcular() {
         console.error(error);
         out.innerHTML = "<span style='color:red'>Error de sintaxis o función no soportada</span>";
     }
-}
-
-function irAPasoAPaso() {
-    const f = document.getElementById('funcion').value.trim();
-    const tipo = document.getElementById('tipo').value;
-    if (!f) { alert("Escribe una función primero."); return; }
-    
-    // URL de MathDF para Laplace
-    let subDominio = (tipo === 'normal') ? 'laplace' : 'ilaplace';
-    window.open(`https://mathdf.com/${subDominio}/es/?expr=${encodeURIComponent(f)}`, '_blank');
 }
 </script>
 
