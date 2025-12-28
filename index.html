@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Laplace Pro</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Calculus.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Extra.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
+
+        /* ANIMACIÓN FADE IN GENERAL */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(25px);
+            animation: fadeUp 0.9s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .calculadora-moderna {
+            max-width: 650px;
+            width: 100%;
+            margin: 10px auto;
+            padding: 40px 30px;
+            background: #F2F2F2;
+            border-radius: 35px;
+            font-family: 'Open Sans', sans-serif;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 28px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: titleFadeIn 1s ease forwards;
+            animation-delay: 0.5s;
+        }
+
+        .header-section h1 {
+            font-size: 40px;
+            font-weight: 600;
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            color: black;
+        }
+
+        .header-section p {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 5px;
+            font-family: 'Playfair Display', serif;
+            color: #333;
+        }
+
+        @keyframes titleFadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        label {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 8px;
+            margin-left: 10px;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 15px;
+            padding: 14px;
+            margin-bottom: 22px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            background: white;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #999;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .botones-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .boton-estilo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 35px;
+            padding: 14px 22px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: black;
+            text-decoration: none;
+        }
+
+        .boton-estilo:hover {
+            background: #e6e6e6;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .boton-estilo img { width: 20px; height: 20px; }
+
+        .boton-principal {
+            background: black;
+            color: white;
+            border: none;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        #resultado {
+            margin-top: 30px;
+            padding: 25px;
+            background: white;
+            border-radius: 25px;
+            min-height: 50px;
+            text-align: center;
+            font-size: 1.3rem;
+            border: 1px solid #eee;
+            overflow-x: auto;
+        }
+
+        /* --- ESTILOS DEL MODAL MEJORADOS --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: #F2F2F2;
+            margin: 5% auto;
+            padding: 35px;
+            border-radius: 35px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-family: 'Open Sans', sans-serif;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: fadeUp 0.5s ease;
+        }
+
+        .modal-content h2 {
+            font-family: 'Playfair Display', serif;
+            margin-top: 0;
+            font-size: 28px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        .modal-content h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #000;
+        }
+
+        .modal-content p, .modal-content li {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .ejemplo-box {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            display: block;
+            font-family: monospace;
+            margin: 5px 0 15px 0;
+            border-left: 3px solid black;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="fade-in">
+    <div class="calculadora-moderna">
+        
+        <div class="header-section">
+            <h1>Transformada de Laplace</h1>
+            <p>√(Raiz) Cuadrada²</p>
+        </div>
+
+        <label id="label-funcion">Función f(t)</label>
+        <input id="funcion" placeholder="Ej: exp(-a*t), sin(w*t), t^2" type="text">
+
+        <div class="row">
+            <div>
+                <label>Tipo de Transformada</label>
+                <select id="tipo">
+                    <option value="normal">Directa (t → s)</option>
+                    <option value="inversa">Inversa (s → t)</option>
+                </select>
+            </div>
+            <div>
+                <label>Variable de salida</label>
+                <input id="variable-salida" value="s" readonly style="background: #e9e9e9; cursor: not-allowed;">
+            </div>
+        </div>
+
+        <div class="botones-container">
+            <button onclick="calcular()" class="boton-estilo boton-principal">
+                Calcular Transformada
+            </button>
+
+            <button onclick="irAPasoAPaso()" class="boton-estilo">
+                <img src="https://cdn-icons-png.flaticon.com/512/2374/2374367.png" alt="pasos">
+                Ver paso a paso (MathDF)
+            </button>
+
+            <button onclick="abrirModal()" class="boton-estilo">
+                <img src="https://cdn-icons-png.flaticon.com/512/471/471664.png" alt="info">
+                ¿Cómo ingresar funciones?
+            </button>
+        </div>
+
+        <div id="resultado">Esperando función...</div>
+    </div>
+</div>
+
+<div id="modalInstrucciones" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="cerrarModal()">&times;</span>
+        <h2>Guía de Uso</h2>
+        
+        <section>
+            <h3>1. Variables s y t</h3>
+            <p>Para la <b>Transformada Directa</b>, usa la variable <b>t</b>. Para la <b>Inversa</b>, usa la variable <b>s</b>.</p>
+            <span class="ejemplo-box">Directa: sin(2*t)<br>Inversa: 1/(s^2 + 4)</span>
+        </section>
+
+        <section>
+            <h3>2. Funciones Comunes</h3>
+            <p>Usa <b>exp(a*t)</b> para $e^{at}$ y asegúrate de usar paréntesis en funciones trigonométricas.</p>
+            <span class="ejemplo-box">Correcto: cos(3*t), exp(-2*t), t^3</span>
+        </section>
+
+        <section>
+            <h3>3. Multiplicaciones</h3>
+            <p>Usa siempre el asterisco <b>*</b> para indicar multiplicación, especialmente entre constantes y variables.</p>
+            <span class="ejemplo-box">Ejemplo: 5*exp(-t) en lugar de 5exp(-t)</span>
+        </section>
+
+        <section>
+            <h3>4. Redirección a MathDF</h3>
+            <p>Te redirigimos a <b>MathDF</b> para el "paso a paso" debido a su motor especializado en la resolución detallada de transformadas.</p>
+        </section>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="cerrarModal()" class="boton-estilo boton-principal" style="width: auto; padding: 10px 30px;">Entendido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- LÓGICA MODAL ---
+function abrirModal() { document.getElementById('modalInstrucciones').style.display = "block"; }
+function cerrarModal() { document.getElementById('modalInstrucciones').style.display = "none"; }
+window.onclick = function(e) { if (e.target == document.getElementById('modalInstrucciones')) cerrarModal(); }
+
+// --- CAMBIO DE LABELS SEGÚN TIPO ---
+document.getElementById('tipo').addEventListener('change', function(e) {
+    const label = document.getElementById('label-funcion');
+    const varSalida = document.getElementById('variable-salida');
+    const inputFuncion = document.getElementById('funcion');
+    
+    if (e.target.value === 'normal') {
+        label.innerText = "Función f(t)";
+        varSalida.value = "s";
+        inputFuncion.placeholder = "Ej: exp(-a*t), sin(w*t)";
+    } else {
+        label.innerText = "Función F(s)";
+        varSalida.value = "t";
+        inputFuncion.placeholder = "Ej: 1/(s-1), s/(s^2+9)";
+    }
+});
+
+// --- LÓGICA OPERATIVA ---
+function normalizar(expr) {
+    if (!expr) return "";
+    let e = expr.toLowerCase().replace(/\s+/g, '');
+    e = e.replace(/π/g, 'pi');
+    // Soporte para e^at
+    e = e.replace(/e\^/g, 'exp');
+    return e;
+}
+
+function calcular() {
+    const funcionInput = document.getElementById('funcion').value.trim();
+    const tipo = document.getElementById('tipo').value;
+    const out = document.getElementById('resultado');
+
+    if (!funcionInput) { out.innerHTML = "Ingresa una función"; return; }
+
+    try {
+        const f = normalizar(funcionInput);
+        let resultadoNerdamer;
+        let latex = "";
+
+        if (tipo === 'normal') {
+            // Laplace Directa: f(t) -> F(s)
+            resultadoNerdamer = nerdamer(`laplace(${f}, t, s)`);
+            latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${resultadoNerdamer.toTeX()}`;
+        } else {
+            // Laplace Inversa: F(s) -> f(t)
+            resultadoNerdamer = nerdamer(`ilt(${f}, s, t)`);
+            latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${resultadoNerdamer.toTeX()}`;
+        }
+
+        out.innerHTML = `$$${latex}$$`;
+        MathJax.typesetPromise([out]);
+    } catch (error) {
+        console.error(error);
+        out.innerHTML = "<span style='color:red'>Error de sintaxis o función no soportada</span>";
+    }
+}
+
+function irAPasoAPaso() {
+    const f = document.getElementById('funcion').value.trim();
+    const tipo = document.getElementById('tipo').value;
+    if (!f) { alert("Escribe una función primero."); return; }
+    
+    // URL de MathDF para Laplace
+    let subDominio = (tipo === 'normal') ? 'laplace' : 'ilaplace';
+    window.open(`https://mathdf.com/${subDominio}/es/?expr=${encodeURIComponent(f)}`, '_blank');
+}
+</script>
+
+</body>
+</html>
