@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Laplace Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora de Laplace</title>
 
     <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js"></script>
@@ -12,7 +12,8 @@
     
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            options: { enableMenu: false }
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -21,372 +22,224 @@
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
 
-        .fade-in {
-            opacity: 0;
-            transform: translateY(25px);
-            animation: fadeUp 0.9s ease forwards;
+        body { 
+            background: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 10px; 
+            box-sizing: border-box;
         }
 
-        @keyframes fadeUp {
-            to { opacity: 1; transform: translateY(0); }
+        .fade-in { 
+            opacity: 0; 
+            transform: translateY(20px); 
+            animation: fadeUp 0.8s ease forwards; 
+            width: 100%; 
+            max-width: 600px; 
         }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
-        body {
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 10px; /* Reducido para mejor margen en móvil */
-        }
-
-        .calculadora-moderna {
-            max-width: 650px;
-            width: 100%;
-            margin: 10px auto;
-            padding: 30px 20px; /* Ajustado para móvil */
-            background: #F2F2F2;
+        .calculadora {
+            background: #F2F2F2; 
+            padding: 30px 20px; 
             border-radius: 35px;
-            font-family: 'Open Sans', sans-serif;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-        }
-
-        /* AJUSTES PARA MÓVIL */
-        @media (max-width: 600px) {
-            .header-section h1 { font-size: 28px !important; }
-            .row { grid-template-columns: 1fr !important; gap: 0 !important; }
-            .calculadora-moderna { border-radius: 25px; padding: 25px 15px; }
-            #resultado { font-size: 1.1rem !important; }
-        }
-
-        .header-section {
-            text-align: center;
-            margin-bottom: 28px;
-            opacity: 0;
-            transform: translateY(-20px);
-            animation: titleFadeIn 1s ease forwards;
-            animation-delay: 0.5s;
-        }
-
-        .header-section h1 {
-            font-size: 40px;
-            font-weight: 600;
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-            color: black;
-        }
-
-        .header-section p {
-            font-size: 20px;
-            font-weight: 600;
-            margin-top: 5px;
-            font-family: 'Playfair Display', serif;
-            color: #333;
-        }
-
-        @keyframes titleFadeIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        label {
-            display: block;
-            font-size: 15px;
-            margin-bottom: 8px;
-            margin-left: 10px;
-            color: #333;
-        }
-
-        input, select {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            box-sizing: border-box; 
             width: 100%;
-            font-family: 'Open Sans', sans-serif;
-            font-size: 15px;
-            padding: 14px;
-            margin-bottom: 22px;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            background: white;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: #999;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        .header-section { text-align: center; margin-bottom: 20px; }
+        .header-section h1 { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 32px; 
+            margin: 0; 
+            font-weight: 600; 
+            text-transform: lowercase;
+        }
+        .header-section p { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 18px; 
+            margin: 5px 0; 
+            font-weight: 600;
         }
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .botones-container {
+        #preview-container, #resultado {
+            background: white; 
+            margin-bottom: 20px; 
+            padding: 20px;
+            border-radius: 20px; 
+            min-height: 70px; 
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            align-items: center; 
+            justify-content: center; 
+            border: 1px solid #eee;
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        label { 
+            display: block; 
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px; 
+            color: #444; 
+            margin: 0 0 6px 12px; 
+            font-weight: 600; 
+        }
+        
+        input, select {
+            width: 100%; 
+            padding: 14px 18px; 
+            margin-bottom: 15px; 
+            border-radius: 25px;
+            border: 1px solid #ccc; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            outline: none;
+            font-family: 'Open Sans', sans-serif;
+            background-color: white;
+        }
+
+        .row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+        }
+
+        .btn-principal {
+            width: 100%; 
+            background: black; 
+            color: white; 
+            border: none;
+            padding: 18px; 
+            border-radius: 30px; 
+            font-size: 16px; 
+            cursor: pointer;
+            font-family: 'Open Sans', sans-serif; 
+            font-weight: 700;
             margin-top: 10px;
         }
 
-        .boton-estilo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 35px;
-            padding: 14px 22px;
-            font-family: 'Open Sans', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: black;
-            text-decoration: none;
-        }
-
-        .boton-estilo:hover {
-            background: #e6e6e6;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
-        .boton-estilo img { width: 20px; height: 20px; }
-
-        .boton-principal {
-            background: black;
-            color: white;
-            border: none;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        #resultado {
-            margin-top: 30px;
-            padding: 25px;
-            background: white;
-            border-radius: 25px;
-            min-height: 80px;
-            text-align: center;
-            font-size: 1.3rem;
-            border: 1px solid #eee;
-            overflow-x: auto; /* IMPORTANTE: Permite scroll lateral en móvil para fórmulas largas */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* --- MODAL --- */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content {
-            background-color: #F2F2F2;
-            margin: 5% auto;
-            padding: 35px;
-            border-radius: 35px;
-            width: 90%;
-            max-width: 550px;
-            max-height: 80vh;
-            overflow-y: auto;
-            font-family: 'Open Sans', sans-serif;
-            position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            animation: fadeUp 0.5s ease;
-        }
-
-        .modal-content h2 {
-            font-family: 'Playfair Display', serif;
-            margin-top: 0;
-            font-size: 28px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        .modal-content h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: #000;
-        }
-
-        .modal-content p, .modal-content li {
-            font-size: 14px;
-            color: #444;
-            line-height: 1.5;
-        }
-
-        .ejemplo-box {
-            background: white;
-            padding: 8px 15px;
-            border-radius: 15px;
-            display: block;
-            font-family: monospace;
-            margin: 5px 0 15px 0;
-            border-left: 3px solid black;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #666;
+        @media (max-width: 450px) {
+            .header-section h1 { font-size: 26px; }
+            .row { grid-template-columns: 1fr; gap: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="fade-in" style="width: 100%; display: flex; justify-content: center;">
-    <div class="calculadora-moderna">
+<div class="fade-in">
+    <div class="calculadora">
         <div class="header-section">
-            <h1>Transformada de Laplace</h1>
+            <h1>transformada de laplace</h1>
             <p>√(Raiz) Cuadrada²</p>
         </div>
 
-        <label id="label-funcion">Función f(t)</label>
-        <input id="funcion" placeholder="Ej: exp(-a*t), sin(w*t), t^2" type="text">
+        <div id="preview-container">
+            <div id="latex-preview">$$ \mathcal{L}\{ f(t) \} $$</div>
+        </div>
+
+        <label>función a transformar</label>
+        <input id="funcion" placeholder="Ej: exp(-2*t)*sin(3*t)" type="text" oninput="actualizarVistaPrevia()">
 
         <div class="row">
             <div>
-                <label>Tipo de Transformada</label>
-                <select id="tipo">
-                    <option value="normal">Directa (t → s)</option>
+                <label>operación</label>
+                <select id="tipo" onchange="actualizarVistaPrevia()">
+                    <option value="directa">Directa (t → s)</option>
                     <option value="inversa">Inversa (s → t)</option>
                 </select>
             </div>
             <div>
-                <label>Variable de salida</label>
-                <input id="variable-salida" value="s" readonly style="background: #e9e9e9; cursor: not-allowed;">
+                <label>variable principal</label>
+                <select id="variable" onchange="actualizarVistaPrevia()">
+                    <option value="t">t (Tiempo)</option>
+                    <option value="s">s (Frecuencia)</option>
+                </select>
             </div>
         </div>
 
-        <div class="botones-container">
-            <button onclick="calcular()" class="boton-estilo boton-principal">
-                Calcular Transformada
-            </button>
+        <button onclick="calcularLaplace()" class="btn-principal">
+            Resolver Transformada
+        </button>
 
-            <button onclick="abrirModal()" class="boton-estilo">
-                <img src="https://cdn-icons-png.flaticon.com/512/471/471664.png" alt="info">
-                ¿Cómo ingresar funciones?
-            </button>
-        </div>
-
-        <div id="resultado">Esperando función...</div>
-    </div>
-</div>
-
-<div id="modalInstrucciones" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="cerrarModal()">&times;</span>
-        <h2>Guía de Uso</h2>
-        <section>
-            <h3>1. Variables s y t</h3>
-            <p>Para la <b>Transformada Directa</b>, usa la variable <b>t</b>. Para la <b>Inversa</b>, usa la variable <b>s</b>.</p>
-            <span class="ejemplo-box">Directa: sin(2*t)<br>Inversa: 1/(s^2 + 4)</span>
-        </section>
-        <section>
-            <h3>2. Funciones Comunes</h3>
-            <p>Usa <b>exp(a*t)</b> para $e^{at}$ y asegúrate de usar paréntesis en funciones trigonométricas.</p>
-            <span class="ejemplo-box">Correcto: cos(3*t), exp(-2*t), t^3</span>
-        </section>
-        <section>
-            <h3>3. Multiplicaciones</h3>
-            <p>Usa siempre el asterisco <b>*</b> para indicar multiplicación, especialmente entre constantes y variables.</p>
-            <span class="ejemplo-box">Ejemplo: 5*exp(-t) en lugar de 5exp(-t)</span>
-        </section>
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="cerrarModal()" class="boton-estilo boton-principal" style="width: auto; padding: 10px 30px;">Entendido</button>
-        </div>
+        <div id="resultado">Esperando datos...</div>
     </div>
 </div>
 
 <script>
-function abrirModal() { document.getElementById('modalInstrucciones').style.display = "block"; }
-function cerrarModal() { document.getElementById('modalInstrucciones').style.display = "none"; }
-window.onclick = function(e) { if (e.target == document.getElementById('modalInstrucciones')) cerrarModal(); }
-
-document.getElementById('tipo').addEventListener('change', function(e) {
-    const label = document.getElementById('label-funcion');
-    const varSalida = document.getElementById('variable-salida');
-    const inputFuncion = document.getElementById('funcion');
-    if (e.target.value === 'normal') {
-        label.innerText = "Función f(t)";
-        varSalida.value = "s";
-        inputFuncion.placeholder = "Ej: exp(-a*t), sin(w*t)";
-    } else {
-        label.innerText = "Función F(s)";
-        varSalida.value = "t";
-        inputFuncion.placeholder = "Ej: 1/(s-1), s/(s^2+9)";
-    }
-});
-
 function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    // Corregir exponenciales comunes
-    e = e.replace(/e\^/g, 'exp');
-    // Insertar asteriscos faltantes entre número y letra (ej: 2s -> 2*s)
-    e = e.replace(/(\d)([a-z])/g, '$1*$2');
+    e = e.replace(/exp/g, 'e^'); // Nerdamer entiende mejor e^ para simplificar
     return e;
 }
 
-function calcular() {
-    const funcionInput = document.getElementById('funcion').value.trim();
+function actualizarVistaPrevia() {
+    const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
-    const out = document.getElementById('resultado');
+    const v = document.getElementById('variable').value;
+    const preview = document.getElementById('latex-preview');
 
-    if (!funcionInput) { out.innerHTML = "Ingresa una función"; return; }
+    if (!input) {
+        preview.innerHTML = tipo === 'directa' ? `$$ \\mathcal{L}\\{ f(${v}) \\} $$` : `$$ \\mathcal{L}^{-1}\\{ F(${v}) \\} $$`;
+        MathJax.typesetPromise([preview]);
+        return;
+    }
 
     try {
-        const f = normalizar(funcionInput);
-        let sol;
-        let latex = "";
-
-        if (tipo === 'normal') {
-            sol = nerdamer(`laplace(${f}, t, s)`).evaluate();
-            latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${sol.toTeX()}`;
+        const fLatex = nerdamer(normalizar(input)).toTeX();
+        if (tipo === 'directa') {
+            preview.innerHTML = `$$ \\mathcal{L}\\{ ${fLatex} \\} $$`;
         } else {
-            // LÓGICA REFORZADA PARA INVERSAS COMPLEJAS
-            // Primero intentamos resolverla directo
-            sol = nerdamer(`ilt(${f}, s, t)`).evaluate();
-            
-            // Si el resultado contiene "ilt", significa que falló. 
-            // Intentamos aplicando fracciones parciales primero.
-            if (sol.text().includes('ilt')) {
-                const parciales = nerdamer(`partfrac(${f}, s)`).evaluate();
-                sol = nerdamer(`ilt(${parciales.text()}, s, t)`).evaluate();
-            }
+            preview.innerHTML = `$$ \\mathcal{L}^{-1}\\{ ${fLatex} \\} $$`;
+        }
+    } catch (e) { 
+        preview.innerHTML = `$$ \\dots $$`; 
+    }
+    MathJax.typesetPromise([preview]);
+}
 
-            // Si aún así no puede, lanzamos un error controlado
-            if (sol.text().includes('ilt')) {
-                throw new Error("La función es demasiado compleja para una solución simbólica directa.");
-            }
+function calcularLaplace() {
+    const input = document.getElementById('funcion').value.trim();
+    const tipo = document.getElementById('tipo').value;
+    const v = document.getElementById('variable').value;
+    const out = document.getElementById('resultado');
+    
+    if (!input) return;
 
-            latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${sol.toTeX()}`;
+    try {
+        let f = normalizar(input);
+        let resultado;
+
+        if (tipo === 'directa') {
+            // Laplace Directa: de t a s
+            resultado = nerdamer.laplace(f, v, 's');
+        } else {
+            // Laplace Inversa: de s a t
+            resultado = nerdamer.inverse_laplace(f, v, 't');
         }
 
-        out.innerHTML = `$$${latex}$$`;
+        // LIMPIEZA DE FRACCIONES GIGANTES:
+        // Usamos simplify() para agrupar y expand() para que las identidades e/sin/cos no queden rotas
+        let limpio = nerdamer(resultado.text()).simplify();
+        
+        // Si el resultado es muy largo, intentamos una segunda simplificación
+        let finalTeX = limpio.toTeX();
+        
+        out.innerHTML = `$$ ${finalTeX} $$`;
         MathJax.typesetPromise([out]);
-    } catch (error) {
-        console.error(error);
-        out.innerHTML = `<span style='color:red; font-size: 1rem;'>${error.message || "Error de sintaxis"}</span>`;
+
+    } catch (e) { 
+        out.innerHTML = "<small style='color:red'>Error: Verifica que la función sea transformable</small>"; 
     }
 }
+
+// Inicializar vista
+actualizarVistaPrevia();
 </script>
 
 </body>
