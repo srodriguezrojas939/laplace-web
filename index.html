@@ -12,7 +12,7 @@
     
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
             options: { enableMenu: false }
         };
     </script>
@@ -23,86 +23,80 @@
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
 
         body { 
-            background: white; 
+            background: #F9F9F9; 
             display: flex; 
             justify-content: center; 
-            align-items: flex-start; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 10px; 
-            box-sizing: border-box;
+            padding: 20px; 
+            font-family: 'Open Sans', sans-serif;
         }
 
         .fade-in { 
-            opacity: 0; 
-            transform: translateY(20px); 
-            animation: fadeUp 0.8s ease forwards; 
             width: 100%; 
-            max-width: 600px; 
+            max-width: 550px; 
+            animation: fadeIn 0.6s ease-out;
         }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .calculadora {
             background: #F2F2F2; 
-            padding: 30px 20px; 
-            border-radius: 35px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
-            box-sizing: border-box; 
-            width: 100%;
+            padding: 35px 25px; 
+            border-radius: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
         }
 
         .header-section { text-align: center; margin-bottom: 25px; }
         .header-section h1 { 
             font-family: 'Playfair Display', serif; 
-            font-size: 32px; 
+            font-size: 30px; 
             margin: 0; 
             font-weight: 600; 
+            color: #1a1a1a;
         }
         .header-section p { 
             font-family: 'Playfair Display', serif; 
-            font-size: 18px; 
+            font-size: 16px; 
             margin: 5px 0; 
             font-weight: 600;
+            color: #666;
         }
 
         #preview-container, #resultado {
             background: white; 
-            padding: 22px;
+            padding: 25px;
             border-radius: 20px; 
-            min-height: 80px; 
+            min-height: 85px; 
             display: flex;
             align-items: center; 
             justify-content: center; 
-            border: 1px solid #eee;
+            border: 1px solid #EAEAEA;
             overflow-x: auto; 
         }
 
-        #preview-container { margin-bottom: 25px; }
-        
-        /* Espaciado extra de 40px para el panel de resultado */
-        #resultado { margin-top: 40px; }
+        #resultado { margin-top: 45px; } /* Espaciado extra solicitado */
 
         label { 
             display: block; 
-            font-family: 'Open Sans', sans-serif;
-            font-size: 14px; 
-            color: #444; 
-            margin: 0 0 6px 12px; 
-            font-weight: 600; 
+            font-size: 13px; 
+            color: #555; 
+            margin: 15px 0 6px 15px; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         input, select {
             width: 100%; 
-            padding: 14px 18px; 
-            margin-bottom: 18px; 
+            padding: 15px 20px; 
+            margin-bottom: 10px; 
             border-radius: 25px;
-            border: 1px solid #ccc; 
+            border: 1px solid #DDD; 
             box-sizing: border-box; 
             font-size: 16px; 
             outline: none;
-            font-family: 'Open Sans', sans-serif;
-            background-color: white;
+            background: white;
+            transition: border 0.3s;
         }
+        input:focus { border-color: #000; }
 
         .row { 
             display: grid; 
@@ -112,21 +106,22 @@
 
         .btn-principal {
             width: 100%; 
-            background: black; 
-            color: white; 
+            background: #000; 
+            color: #FFF; 
             border: none;
-            padding: 18px; 
-            border-radius: 30px; 
+            padding: 20px; 
+            border-radius: 35px; 
             font-size: 16px; 
             cursor: pointer;
-            font-family: 'Open Sans', sans-serif; 
             font-weight: 700;
-            margin-top: 5px;
+            margin-top: 20px;
+            transition: background 0.3s;
         }
+        .btn-principal:hover { background: #333; }
 
-        @media (max-width: 450px) {
-            .header-section h1 { font-size: 26px; }
-            .row { grid-template-columns: 1fr; gap: 0; }
+        @media (max-width: 480px) {
+            .row { grid-template-columns: 1fr; }
+            .header-section h1 { font-size: 24px; }
         }
     </style>
 </head>
@@ -140,30 +135,30 @@
         </div>
 
         <div id="preview-container">
-            <div id="latex-preview">$$ \mathcal{L}\{ f(t) \} $$</div>
+            <div id="latex-preview">$$ \mathcal{L}\{ \dots \} $$</div>
         </div>
 
         <label>Función A Transformar</label>
-        <input id="funcion" placeholder="Ej: t^2 o 1/(s-1)" type="text" oninput="actualizarTodo()">
+        <input id="funcion" placeholder="Ej: t^2, 1/(s^2+1), sin(t)" type="text" oninput="actualizar()">
 
         <div class="row">
             <div>
                 <label>Operación</label>
-                <select id="tipo" onchange="autoVariable(); actualizarTodo();">
-                    <option value="directa">Directa (t → s)</option>
-                    <option value="inversa">Inversa (s → t)</option>
+                <select id="tipo" onchange="cambioAutomatico(); actualizar();">
+                    <option value="laplace">Directa (t → s)</option>
+                    <option value="ilt">Inversa (s → t)</option>
                 </select>
             </div>
             <div>
                 <label>Variable Principal</label>
-                <select id="variable" onchange="actualizarTodo()">
+                <select id="variable" onchange="actualizar()">
                     <option value="t">t (Tiempo)</option>
                     <option value="s">s (Frecuencia)</option>
                 </select>
             </div>
         </div>
 
-        <button onclick="calcularLaplace()" class="btn-principal">
+        <button onclick="calcular()" class="btn-principal">
             Resolver Transformada
         </button>
 
@@ -172,77 +167,74 @@
 </div>
 
 <script>
-// Cambia la variable automáticamente según la operación
-function autoVariable() {
+// Sincroniza la variable automáticamente al cambiar de operación
+function cambioAutomatico() {
     const tipo = document.getElementById('tipo').value;
-    const varSelect = document.getElementById('variable');
-    varSelect.value = (tipo === 'directa') ? 't' : 's';
+    const vSelect = document.getElementById('variable');
+    vSelect.value = (tipo === 'laplace') ? 't' : 's';
 }
 
-function normalizar(expr) {
-    if (!expr) return "";
-    let e = expr.toLowerCase().replace(/\s+/g, '');
-    e = e.replace(/π/g, 'pi');
-    // Forzamos e^ a ser exp() para que Nerdamer no se confunda con variables
-    e = e.replace(/e\^/g, 'exp');
-    return e;
+function limpiar(txt) {
+    if (!txt) return "";
+    return txt.toLowerCase().replace(/\s+/g, '').replace(/π/g, 'pi');
 }
 
-function actualizarTodo() {
-    const input = document.getElementById('funcion').value.trim();
+function actualizar() {
+    const input = document.getElementById('funcion').value;
     const tipo = document.getElementById('tipo').value;
     const v = document.getElementById('variable').value;
     const preview = document.getElementById('latex-preview');
 
     if (!input) {
-        preview.innerHTML = tipo === 'directa' ? `$$ \\mathcal{L}\\{ f(${v}) \\} $$` : `$$ \\mathcal{L}^{-1}\\{ F(${v}) \\} $$`;
-        MathJax.typesetPromise([preview]);
-        return;
-    }
-
-    try {
-        const fLatex = nerdamer(normalizar(input)).toTeX();
-        preview.innerHTML = tipo === 'directa' ? `$$ \\mathcal{L}\\{ ${fLatex} \\} $$` : `$$ \\mathcal{L}^{-1}\\{ ${fLatex} \\} $$`;
-    } catch (e) { 
-        preview.innerHTML = `$$ \\dots $$`; 
+        preview.innerHTML = tipo === 'laplace' ? `$$ \\mathcal{L}\\{ f(${v}) \\} $$` : `$$ \\mathcal{L}^{-1}\\{ F(${v}) \\} $$`;
+    } else {
+        try {
+            // Previsualización simple con Nerdamer
+            const tex = nerdamer(limpiar(input)).toTeX();
+            preview.innerHTML = tipo === 'laplace' ? `$$ \\mathcal{L}\\{ ${tex} \\} $$` : `$$ \\mathcal{L}^{-1}\\{ ${tex} \\} $$`;
+        } catch (e) { preview.innerHTML = `$$ \\dots $$`; }
     }
     MathJax.typesetPromise([preview]);
 }
 
-function calcularLaplace() {
+function calcular() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
     const v = document.getElementById('variable').value;
     const out = document.getElementById('resultado');
-    
+
     if (!input) return;
 
     try {
-        let f = normalizar(input);
-        let sol;
-
-        // EJECUCIÓN DIRECTA DEL COMANDO NERDAMER
-        if (tipo === 'directa') {
-            // Laplace: de variable 'v' a 's'
-            sol = nerdamer(`laplace(${f}, ${v}, s)`);
-        } else {
-            // Inversa: de variable 'v' a 't'
-            sol = nerdamer(`ilt(${f}, ${v}, t)`);
-        }
-
-        // Simplificación: .simplify() agrupa términos y evita fracciones gigantes
-        let limpio = sol.simplify();
+        const expr = limpiar(input);
+        const destino = (tipo === 'laplace') ? 's' : 't';
         
-        out.innerHTML = `$$ ${limpio.toTeX()} $$`;
-        MathJax.typesetPromise([out]);
+        // MÉTODO ALTERNATIVO: Llamada mediante cadena de evaluación pura para mayor estabilidad
+        let comando = `${tipo}(${expr}, ${v}, ${destino})`;
+        let rawResult = nerdamer(comando);
 
-    } catch (e) { 
-        out.innerHTML = "<small style='color:red; font-family:Open Sans;'>Error: No se pudo procesar. Revisa si faltan paréntesis o el formato.</small>"; 
+        // Simplificación profunda para evitar las fracciones gigantes
+        // .simplify() agrupa términos, .expand() limpia identidades
+        let final = rawResult.simplify();
+        
+        // Si el resultado es igual a la entrada, es que no pudo resolverla
+        if (final.text().includes(tipo)) {
+            out.innerHTML = "<small style='color:#777'>Esta función requiere métodos avanzados de tablas. Intenta con una más estándar.</small>";
+        } else {
+            out.innerHTML = `$$ ${final.toTeX()} $$`;
+        }
+        
+    } catch (e) {
+        console.error(e);
+        out.innerHTML = "<small style='color:red'>Error: No se pudo procesar. Revisa los paréntesis.</small>";
     }
+    MathJax.typesetPromise([out]);
 }
 
-// Iniciar con la variable correcta
-window.onload = autoVariable;
+window.onload = () => {
+    cambioAutomatico();
+    actualizar();
+};
 </script>
 
 </body>
