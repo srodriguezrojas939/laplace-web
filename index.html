@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calculadora De Laplace</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Calculus.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Extra.js"></script>
-    
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
@@ -23,80 +18,78 @@
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
 
         body { 
-            background: #F9F9F9; 
+            background: white; 
             display: flex; 
             justify-content: center; 
             padding: 20px; 
+            margin: 0;
             font-family: 'Open Sans', sans-serif;
         }
 
         .fade-in { 
             width: 100%; 
             max-width: 550px; 
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 0.8s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .calculadora {
             background: #F2F2F2; 
             padding: 35px 25px; 
             border-radius: 40px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
         }
 
         .header-section { text-align: center; margin-bottom: 25px; }
         .header-section h1 { 
             font-family: 'Playfair Display', serif; 
-            font-size: 30px; 
+            font-size: 32px; 
             margin: 0; 
             font-weight: 600; 
-            color: #1a1a1a;
         }
         .header-section p { 
             font-family: 'Playfair Display', serif; 
-            font-size: 16px; 
+            font-size: 18px; 
             margin: 5px 0; 
             font-weight: 600;
-            color: #666;
         }
 
         #preview-container, #resultado {
             background: white; 
             padding: 25px;
             border-radius: 20px; 
-            min-height: 85px; 
+            min-height: 90px; 
             display: flex;
             align-items: center; 
             justify-content: center; 
-            border: 1px solid #EAEAEA;
+            border: 1px solid #eee;
             overflow-x: auto; 
+            text-align: center;
         }
 
-        #resultado { margin-top: 45px; } /* Espaciado extra solicitado */
+        /* Espaciado de 45px solicitado */
+        #resultado { margin-top: 45px; transition: all 0.3s ease; }
 
         label { 
             display: block; 
-            font-size: 13px; 
-            color: #555; 
-            margin: 15px 0 6px 15px; 
-            font-weight: 700; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 14px; 
+            color: #444; 
+            margin: 18px 0 6px 15px; 
+            font-weight: 600; 
         }
         
         input, select {
             width: 100%; 
             padding: 15px 20px; 
-            margin-bottom: 10px; 
+            margin-bottom: 12px; 
             border-radius: 25px;
-            border: 1px solid #DDD; 
+            border: 1px solid #ccc; 
             box-sizing: border-box; 
             font-size: 16px; 
             outline: none;
             background: white;
-            transition: border 0.3s;
+            font-family: 'Open Sans', sans-serif;
         }
-        input:focus { border-color: #000; }
 
         .row { 
             display: grid; 
@@ -106,22 +99,33 @@
 
         .btn-principal {
             width: 100%; 
-            background: #000; 
-            color: #FFF; 
+            background: black; 
+            color: white; 
             border: none;
             padding: 20px; 
             border-radius: 35px; 
             font-size: 16px; 
             cursor: pointer;
             font-weight: 700;
-            margin-top: 20px;
-            transition: background 0.3s;
+            margin-top: 15px;
+            transition: transform 0.2s;
         }
-        .btn-principal:hover { background: #333; }
+        .btn-principal:active { transform: scale(0.97); }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #333;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         @media (max-width: 480px) {
-            .row { grid-template-columns: 1fr; }
-            .header-section h1 { font-size: 24px; }
+            .row { grid-template-columns: 1fr; gap: 0; }
+            .header-section h1 { font-size: 26px; }
         }
     </style>
 </head>
@@ -135,106 +139,105 @@
         </div>
 
         <div id="preview-container">
-            <div id="latex-preview">$$ \mathcal{L}\{ \dots \} $$</div>
+            <div id="latex-preview">$$ \dots $$</div>
         </div>
 
-        <label>Función A Transformar</label>
-        <input id="funcion" placeholder="Ej: t^2, 1/(s^2+1), sin(t)" type="text" oninput="actualizar()">
+        <label>Función a transformar</label>
+        <input id="funcion" placeholder="Ej: 1/(s^2+1) o exp(-t)" type="text" oninput="actualizarPreview()">
 
         <div class="row">
             <div>
                 <label>Operación</label>
-                <select id="tipo" onchange="cambioAutomatico(); actualizar();">
-                    <option value="laplace">Directa (t → s)</option>
-                    <option value="ilt">Inversa (s → t)</option>
+                <select id="tipo" onchange="autoVariable(); actualizarPreview();">
+                    <option value="laplace transform">Directa (t → s)</option>
+                    <option value="inverse laplace transform">Inversa (s → t)</option>
                 </select>
             </div>
             <div>
-                <label>Variable Principal</label>
-                <select id="variable" onchange="actualizar()">
+                <label>Variable principal</label>
+                <select id="variable" onchange="actualizarPreview()">
                     <option value="t">t (Tiempo)</option>
-                    <option value="s">s (Frecuencia)</option>
+                    <option value="s" selected>s (Frecuencia)</option>
                 </select>
             </div>
         </div>
 
-        <button onclick="calcular()" class="btn-principal">
+        <button onclick="resolverConAPI()" class="btn-principal" id="btn-texto">
             Resolver Transformada
         </button>
 
-        <div id="resultado">Esperando Datos...</div>
+        <div id="resultado">Esperando datos...</div>
     </div>
 </div>
 
 <script>
-// Sincroniza la variable automáticamente al cambiar de operación
-function cambioAutomatico() {
+// Sincronización automática de variables
+function autoVariable() {
     const tipo = document.getElementById('tipo').value;
     const vSelect = document.getElementById('variable');
-    vSelect.value = (tipo === 'laplace') ? 't' : 's';
+    vSelect.value = (tipo.includes('inverse')) ? 's' : 't';
 }
 
-function limpiar(txt) {
-    if (!txt) return "";
-    return txt.toLowerCase().replace(/\s+/g, '').replace(/π/g, 'pi');
-}
-
-function actualizar() {
+function actualizarPreview() {
     const input = document.getElementById('funcion').value;
-    const tipo = document.getElementById('tipo').value;
-    const v = document.getElementById('variable').value;
     const preview = document.getElementById('latex-preview');
-
-    if (!input) {
-        preview.innerHTML = tipo === 'laplace' ? `$$ \\mathcal{L}\\{ f(${v}) \\} $$` : `$$ \\mathcal{L}^{-1}\\{ F(${v}) \\} $$`;
-    } else {
-        try {
-            // Previsualización simple con Nerdamer
-            const tex = nerdamer(limpiar(input)).toTeX();
-            preview.innerHTML = tipo === 'laplace' ? `$$ \\mathcal{L}\\{ ${tex} \\} $$` : `$$ \\mathcal{L}^{-1}\\{ ${tex} \\} $$`;
-        } catch (e) { preview.innerHTML = `$$ \\dots $$`; }
-    }
+    if(!input) { preview.innerHTML = "$$ \\dots $$"; return; }
+    
+    // Limpieza estética para el preview
+    let display = input.replace(/exp/g, 'e^').replace(/\*/g, '');
+    preview.innerHTML = `$$ ${display} $$`;
     MathJax.typesetPromise([preview]);
 }
 
-function calcular() {
+async function resolverConAPI() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
-    const v = document.getElementById('variable').value;
-    const out = document.getElementById('resultado');
+    const varInput = document.getElementById('variable').value;
+    const resDiv = document.getElementById('resultado');
+    const btn = document.getElementById('btn-texto');
 
     if (!input) return;
 
-    try {
-        const expr = limpiar(input);
-        const destino = (tipo === 'laplace') ? 's' : 't';
-        
-        // MÉTODO ALTERNATIVO: Llamada mediante cadena de evaluación pura para mayor estabilidad
-        let comando = `${tipo}(${expr}, ${v}, ${destino})`;
-        let rawResult = nerdamer(comando);
+    // Estado de carga
+    resDiv.innerHTML = "Procesando en la nube...";
+    btn.disabled = true;
 
-        // Simplificación profunda para evitar las fracciones gigantes
-        // .simplify() agrupa términos, .expand() limpia identidades
-        let final = rawResult.simplify();
+    try {
+        // Construimos la consulta para la API de WolframAlpha
+        const query = encodeURIComponent(`${tipo} ${input}`);
         
-        // Si el resultado es igual a la entrada, es que no pudo resolverla
-        if (final.text().includes(tipo)) {
-            out.innerHTML = "<small style='color:#777'>Esta función requiere métodos avanzados de tablas. Intenta con una más estándar.</small>";
+        // Usamos un proxy público para evitar bloqueos de seguridad (CORS)
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const targetUrl = `http://api.wolframalpha.com/v1/result?appid=W6L6Y7-7H8H98W6E8&i=${query}`;
+        
+        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+        const data = await response.json();
+        
+        if (data.contents) {
+            let answer = data.contents;
+            
+            // Limpieza de la respuesta para que se vea como LaTeX elegante
+            // Convertimos nombres de funciones a formato LaTeX
+            let cleanAnswer = answer
+                .replace(/sqrt/g, '\\sqrt')
+                .replace(/theta\(t\)/g, 'u(t)') // Función escalón
+                .replace(/exp\((.*?)\)/g, 'e^{$1}')
+                .replace(/ /g, '');
+
+            resDiv.innerHTML = `$$ ${cleanAnswer} $$`;
         } else {
-            out.innerHTML = `$$ ${final.toTeX()} $$`;
+            resDiv.innerHTML = "<span style='color:red'>No se encontró una solución simple. Revisa la función.</span>";
         }
-        
-    } catch (e) {
-        console.error(e);
-        out.innerHTML = "<small style='color:red'>Error: No se pudo procesar. Revisa los paréntesis.</small>";
+    } catch (error) {
+        resDiv.innerHTML = "<span style='color:red'>Error de conexión con la API. Reintenta en unos segundos.</span>";
+    } finally {
+        btn.disabled = false;
+        MathJax.typesetPromise([resDiv]);
     }
-    MathJax.typesetPromise([out]);
 }
 
-window.onload = () => {
-    cambioAutomatico();
-    actualizar();
-};
+// Inicialización
+window.onload = autoVariable;
 </script>
 
 </body>
