@@ -51,13 +51,12 @@
             width: 100%;
         }
 
-        .header-section { text-align: center; margin-bottom: 20px; }
+        .header-section { text-align: center; margin-bottom: 25px; }
         .header-section h1 { 
             font-family: 'Playfair Display', serif; 
             font-size: 32px; 
             margin: 0; 
             font-weight: 600; 
-            /* Se aplica mayúscula inicial vía HTML directamente */
         }
         .header-section p { 
             font-family: 'Playfair Display', serif; 
@@ -68,9 +67,9 @@
 
         #preview-container, #resultado {
             background: white; 
-            padding: 20px;
+            padding: 22px;
             border-radius: 20px; 
-            min-height: 75px; 
+            min-height: 80px; 
             display: flex;
             align-items: center; 
             justify-content: center; 
@@ -79,10 +78,10 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        #preview-container { margin-bottom: 20px; }
+        #preview-container { margin-bottom: 25px; }
         
-        /* Espaciado extra solicitado para el panel de resultado */
-        #resultado { margin-top: 30px; }
+        /* Espaciado extra solicitado de 40px para el resultado */
+        #resultado { margin-top: 40px; color: #333; font-size: 1.1rem; }
 
         label { 
             display: block; 
@@ -96,7 +95,7 @@
         input, select {
             width: 100%; 
             padding: 14px 18px; 
-            margin-bottom: 15px; 
+            margin-bottom: 18px; 
             border-radius: 25px;
             border: 1px solid #ccc; 
             box-sizing: border-box; 
@@ -104,12 +103,15 @@
             outline: none;
             font-family: 'Open Sans', sans-serif;
             background-color: white;
+            transition: all 0.3s;
         }
+
+        input:focus { border-color: #888; }
 
         .row { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
+            gap: 15px; 
         }
 
         .btn-principal {
@@ -123,11 +125,12 @@
             cursor: pointer;
             font-family: 'Open Sans', sans-serif; 
             font-weight: 700;
-            margin-top: 10px;
-            transition: transform 0.2s ease;
+            margin-top: 5px;
+            transition: all 0.3s;
         }
 
-        .btn-principal:active { transform: scale(0.98); }
+        .btn-principal:hover { background: #333; transform: translateY(-2px); }
+        .btn-principal:active { transform: translateY(0); }
 
         @media (max-width: 450px) {
             .header-section h1 { font-size: 26px; }
@@ -149,19 +152,19 @@
         </div>
 
         <label>Función A Transformar</label>
-        <input id="funcion" placeholder="Ej: e^(-2t)*sin(3t)" type="text" oninput="actualizarVistaPrevia()">
+        <input id="funcion" placeholder="Ej: t^2 + sin(t)" type="text" oninput="actualizarTodo()">
 
         <div class="row">
             <div>
                 <label>Operación</label>
-                <select id="tipo" onchange="actualizarVistaPrevia()">
+                <select id="tipo" onchange="sincronizarVariable(); actualizarTodo();">
                     <option value="directa">Directa (t → s)</option>
                     <option value="inversa">Inversa (s → t)</option>
                 </select>
             </div>
             <div>
                 <label>Variable Principal</label>
-                <select id="variable" onchange="actualizarVistaPrevia()">
+                <select id="variable" onchange="actualizarTodo()">
                     <option value="t">t (Tiempo)</option>
                     <option value="s">s (Frecuencia)</option>
                 </select>
@@ -177,17 +180,30 @@
 </div>
 
 <script>
-// Función para que Nerdamer entienda mejor las entradas del usuario
+// 1. Sincronización automática de variables
+function sincronizarVariable() {
+    const tipo = document.getElementById('tipo').value;
+    const variableSelect = document.getElementById('variable');
+    
+    if (tipo === 'directa') {
+        variableSelect.value = 't';
+    } else {
+        variableSelect.value = 's';
+    }
+}
+
+// 2. Normalización de entrada para Nerdamer
 function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    // Reemplazar e^ por exp() para asegurar que Nerdamer lo trate como función exponencial y no como variable 'e'
+    // Forzamos que e^ sea tratado como exp() para evitar errores de variable
     e = e.replace(/e\^/g, 'exp');
     return e;
 }
 
-function actualizarVistaPrevia() {
+// 3. Vista previa en tiempo real
+function actualizarTodo() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
     const v = document.getElementById('variable').value;
@@ -208,6 +224,7 @@ function actualizarVistaPrevia() {
     MathJax.typesetPromise([preview]);
 }
 
+// 4. CÁLCULO REAL (CORREGIDO)
 function calcularLaplace() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
@@ -221,31 +238,32 @@ function calcularLaplace() {
         let sol;
 
         if (tipo === 'directa') {
-            // Transformada Directa: de t a s (usualmente)
-            // nerdamer.laplace(función, var_origen, var_destino)
-            sol = nerdamer.laplace(f, v, 's');
+            // Transformada de Laplace de f(v) hacia s
+            sol = nerdamer('laplace(' + f + ',' + v + ', s)');
         } else {
-            // Transformada Inversa: de s a t (usualmente)
-            // En Nerdamer la inversa se llama 'ilt' (Inverse Laplace Transform)
-            sol = nerdamer.ilt(f, v, 't');
+            // Transformada Inversa de f(v) hacia t
+            // Usamos la función interna de Nerdamer 'ilt'
+            sol = nerdamer('ilt(' + f + ',' + v + ', t)');
         }
 
-        // Simplificación para evitar las fracciones gigantes y mostrar e, sin, cos limpios
-        // Usamos una combinación de simplify y expand para que la estética sea profesional
-        let resultadoTexto = sol.text();
-        let simplificado = nerdamer(resultadoTexto).simplify();
+        // Simplificamos y expandimos para que el resultado sea elegante
+        // y no una fracción racional gigante
+        let simplificado = nerdamer(sol.text()).simplify().expand();
         
         out.innerHTML = `$$ ${simplificado.toTeX()} $$`;
         MathJax.typesetPromise([out]);
 
     } catch (e) { 
         console.error(e);
-        out.innerHTML = "<small style='color:red'>Error: No se pudo resolver. Revisa los paréntesis o la función.</small>"; 
+        out.innerHTML = "<small style='color:red'>Error: No se pudo procesar. Intenta con funciones más simples como 't' o '1/s'.</small>"; 
     }
 }
 
-// Inicialización
-actualizarVistaPrevia();
+// Inicialización al cargar
+window.onload = () => {
+    sincronizarVariable();
+    actualizarTodo();
+};
 </script>
 
 </body>
