@@ -21,7 +21,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
 
-        /* ANIMACIÓN FADE IN GENERAL */
         .fade-in {
             opacity: 0;
             transform: translateY(25px);
@@ -39,14 +38,14 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 10px; /* Reducido para mobile */
+            padding: 10px; /* Reducido para mejor margen en móvil */
         }
 
         .calculadora-moderna {
             max-width: 650px;
             width: 100%;
             margin: 10px auto;
-            padding: 40px 30px;
+            padding: 30px 20px; /* Ajustado para móvil */
             background: #F2F2F2;
             border-radius: 35px;
             font-family: 'Open Sans', sans-serif;
@@ -55,14 +54,12 @@
             box-sizing: border-box;
         }
 
-        /* AJUSTES RESPONSIVOS */
-        @media (max-width: 500px) {
-            .calculadora-moderna {
-                padding: 30px 20px;
-                border-radius: 25px;
-            }
-            .header-section h1 { font-size: 30px !important; }
+        /* AJUSTES PARA MÓVIL */
+        @media (max-width: 600px) {
+            .header-section h1 { font-size: 28px !important; }
             .row { grid-template-columns: 1fr !important; gap: 0 !important; }
+            .calculadora-moderna { border-radius: 25px; padding: 25px 15px; }
+            #resultado { font-size: 1.1rem !important; }
         }
 
         .header-section {
@@ -96,13 +93,10 @@
 
         label {
             display: block;
-            font-size: 14px;
+            font-size: 15px;
             margin-bottom: 8px;
             margin-left: 10px;
-            color: #666;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #333;
         }
 
         input, select {
@@ -175,17 +169,17 @@
             padding: 25px;
             background: white;
             border-radius: 25px;
-            min-height: 50px;
+            min-height: 80px;
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             border: 1px solid #eee;
-            overflow-x: auto; /* Scroll para fórmulas largas en mobile */
+            overflow-x: auto; /* IMPORTANTE: Permite scroll lateral en móvil para fórmulas largas */
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
-        /* --- ESTILOS DEL MODAL --- */
+        /* --- MODAL --- */
         .modal {
             display: none;
             position: fixed;
@@ -258,7 +252,6 @@
 
 <div class="fade-in" style="width: 100%; display: flex; justify-content: center;">
     <div class="calculadora-moderna">
-        
         <div class="header-section">
             <h1>Transformada de Laplace</h1>
             <p>√(Raiz) Cuadrada²</p>
@@ -300,25 +293,21 @@
     <div class="modal-content">
         <span class="close-modal" onclick="cerrarModal()">&times;</span>
         <h2>Guía de Uso</h2>
-        
         <section>
             <h3>1. Variables s y t</h3>
             <p>Para la <b>Transformada Directa</b>, usa la variable <b>t</b>. Para la <b>Inversa</b>, usa la variable <b>s</b>.</p>
             <span class="ejemplo-box">Directa: sin(2*t)<br>Inversa: 1/(s^2 + 4)</span>
         </section>
-
         <section>
             <h3>2. Funciones Comunes</h3>
             <p>Usa <b>exp(a*t)</b> para $e^{at}$ y asegúrate de usar paréntesis en funciones trigonométricas.</p>
             <span class="ejemplo-box">Correcto: cos(3*t), exp(-2*t), t^3</span>
         </section>
-
         <section>
             <h3>3. Multiplicaciones</h3>
             <p>Usa siempre el asterisco <b>*</b> para indicar multiplicación, especialmente entre constantes y variables.</p>
             <span class="ejemplo-box">Ejemplo: 5*exp(-t) en lugar de 5exp(-t)</span>
         </section>
-
         <div style="text-align: center; margin-top: 20px;">
             <button onclick="cerrarModal()" class="boton-estilo boton-principal" style="width: auto; padding: 10px 30px;">Entendido</button>
         </div>
@@ -326,17 +315,14 @@
 </div>
 
 <script>
-// --- LÓGICA MODAL ---
 function abrirModal() { document.getElementById('modalInstrucciones').style.display = "block"; }
 function cerrarModal() { document.getElementById('modalInstrucciones').style.display = "none"; }
 window.onclick = function(e) { if (e.target == document.getElementById('modalInstrucciones')) cerrarModal(); }
 
-// --- CAMBIO DE LABELS SEGÚN TIPO ---
 document.getElementById('tipo').addEventListener('change', function(e) {
     const label = document.getElementById('label-funcion');
     const varSalida = document.getElementById('variable-salida');
     const inputFuncion = document.getElementById('funcion');
-    
     if (e.target.value === 'normal') {
         label.innerText = "Función f(t)";
         varSalida.value = "s";
@@ -348,16 +334,14 @@ document.getElementById('tipo').addEventListener('change', function(e) {
     }
 });
 
-// --- LÓGICA OPERATIVA OPTIMIZADA ---
 function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    // Asegurar que e^ se convierta a exp(...)
-    if (e.includes('e^')) {
-        e = e.replace(/e\^(\w+)/g, 'exp($1)');
-        e = e.replace(/e\^\(([^)]+)\)/g, 'exp($1)');
-    }
+    // Corregir exponenciales comunes
+    e = e.replace(/e\^/g, 'exp');
+    // Insertar asteriscos faltantes entre número y letra (ej: 2s -> 2*s)
+    e = e.replace(/(\d)([a-z])/g, '$1*$2');
     return e;
 }
 
@@ -370,35 +354,37 @@ function calcular() {
 
     try {
         const f = normalizar(funcionInput);
-        let resultadoNerdamer;
+        let sol;
         let latex = "";
 
-        // Para Laplace, es crucial que Nerdamer reconozca la expresión simplificada
-        const symbolicFn = nerdamer(f).simplify();
-
         if (tipo === 'normal') {
-            // Transformada Directa
-            resultadoNerdamer = nerdamer(`laplace(${symbolicFn.text()}, t, s)`);
-            latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${resultadoNerdamer.toTeX()}`;
+            sol = nerdamer(`laplace(${f}, t, s)`).evaluate();
+            latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${sol.toTeX()}`;
         } else {
-            // Transformada Inversa: Forzamos evaluación para evitar que devuelva "ilt(...)"
-            // Simplificamos la entrada para que el motor reconozca las fracciones parciales internamente
-            resultadoNerdamer = nerdamer(`ilt(${symbolicFn.text()}, s, t)`).evaluate();
+            // LÓGICA REFORZADA PARA INVERSAS COMPLEJAS
+            // Primero intentamos resolverla directo
+            sol = nerdamer(`ilt(${f}, s, t)`).evaluate();
             
-            // Si el resultado sigue conteniendo 'ilt', intentamos expandir la fracción primero
-            if (resultadoNerdamer.text().includes('ilt')) {
-                const expanded = nerdamer(`partfrac(${symbolicFn.text()}, s)`);
-                resultadoNerdamer = nerdamer(`ilt(${expanded.text()}, s, t)`).evaluate();
+            // Si el resultado contiene "ilt", significa que falló. 
+            // Intentamos aplicando fracciones parciales primero.
+            if (sol.text().includes('ilt')) {
+                const parciales = nerdamer(`partfrac(${f}, s)`).evaluate();
+                sol = nerdamer(`ilt(${parciales.text()}, s, t)`).evaluate();
             }
 
-            latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${resultadoNerdamer.toTeX()}`;
+            // Si aún así no puede, lanzamos un error controlado
+            if (sol.text().includes('ilt')) {
+                throw new Error("La función es demasiado compleja para una solución simbólica directa.");
+            }
+
+            latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${sol.toTeX()}`;
         }
 
         out.innerHTML = `$$${latex}$$`;
         MathJax.typesetPromise([out]);
     } catch (error) {
         console.error(error);
-        out.innerHTML = "<span style='color:red'>Error: Revisa los paréntesis o el formato</span>";
+        out.innerHTML = `<span style='color:red; font-size: 1rem;'>${error.message || "Error de sintaxis"}</span>`;
     }
 }
 </script>
