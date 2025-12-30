@@ -39,7 +39,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 10px; /* Reducido para mobile */
         }
 
         .calculadora-moderna {
@@ -52,6 +52,17 @@
             font-family: 'Open Sans', sans-serif;
             position: relative;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        /* AJUSTES RESPONSIVOS */
+        @media (max-width: 500px) {
+            .calculadora-moderna {
+                padding: 30px 20px;
+                border-radius: 25px;
+            }
+            .header-section h1 { font-size: 30px !important; }
+            .row { grid-template-columns: 1fr !important; gap: 0 !important; }
         }
 
         .header-section {
@@ -85,10 +96,13 @@
 
         label {
             display: block;
-            font-size: 15px;
+            font-size: 14px;
             margin-bottom: 8px;
             margin-left: 10px;
-            color: #333;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         input, select {
@@ -163,12 +177,15 @@
             border-radius: 25px;
             min-height: 50px;
             text-align: center;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             border: 1px solid #eee;
-            overflow-x: auto;
+            overflow-x: auto; /* Scroll para fórmulas largas en mobile */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* --- ESTILOS DEL MODAL MEJORADOS --- */
+        /* --- ESTILOS DEL MODAL --- */
         .modal {
             display: none;
             position: fixed;
@@ -239,7 +256,7 @@
 </head>
 <body>
 
-<div class="fade-in">
+<div class="fade-in" style="width: 100%; display: flex; justify-content: center;">
     <div class="calculadora-moderna">
         
         <div class="header-section">
@@ -331,12 +348,16 @@ document.getElementById('tipo').addEventListener('change', function(e) {
     }
 });
 
-// --- LÓGICA OPERATIVA ---
+// --- LÓGICA OPERATIVA OPTIMIZADA ---
 function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    e = e.replace(/e\^/g, 'exp');
+    // Asegurar que e^ se convierta a exp(...)
+    if (e.includes('e^')) {
+        e = e.replace(/e\^(\w+)/g, 'exp($1)');
+        e = e.replace(/e\^\(([^)]+)\)/g, 'exp($1)');
+    }
     return e;
 }
 
@@ -352,11 +373,24 @@ function calcular() {
         let resultadoNerdamer;
         let latex = "";
 
+        // Para Laplace, es crucial que Nerdamer reconozca la expresión simplificada
+        const symbolicFn = nerdamer(f).simplify();
+
         if (tipo === 'normal') {
-            resultadoNerdamer = nerdamer(`laplace(${f}, t, s)`);
+            // Transformada Directa
+            resultadoNerdamer = nerdamer(`laplace(${symbolicFn.text()}, t, s)`);
             latex = `\\mathcal{L}\\{${nerdamer(f).toTeX()}\\}(s) = ${resultadoNerdamer.toTeX()}`;
         } else {
-            resultadoNerdamer = nerdamer(`ilt(${f}, s, t)`);
+            // Transformada Inversa: Forzamos evaluación para evitar que devuelva "ilt(...)"
+            // Simplificamos la entrada para que el motor reconozca las fracciones parciales internamente
+            resultadoNerdamer = nerdamer(`ilt(${symbolicFn.text()}, s, t)`).evaluate();
+            
+            // Si el resultado sigue conteniendo 'ilt', intentamos expandir la fracción primero
+            if (resultadoNerdamer.text().includes('ilt')) {
+                const expanded = nerdamer(`partfrac(${symbolicFn.text()}, s)`);
+                resultadoNerdamer = nerdamer(`ilt(${expanded.text()}, s, t)`).evaluate();
+            }
+
             latex = `\\mathcal{L}^{-1}\\{${nerdamer(f).toTeX()}\\}(t) = ${resultadoNerdamer.toTeX()}`;
         }
 
@@ -364,7 +398,7 @@ function calcular() {
         MathJax.typesetPromise([out]);
     } catch (error) {
         console.error(error);
-        out.innerHTML = "<span style='color:red'>Error de sintaxis o función no soportada</span>";
+        out.innerHTML = "<span style='color:red'>Error: Revisa los paréntesis o el formato</span>";
     }
 }
 </script>
