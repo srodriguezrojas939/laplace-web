@@ -75,13 +75,12 @@
             justify-content: center; 
             border: 1px solid #eee;
             overflow-x: auto; 
-            -webkit-overflow-scrolling: touch;
         }
 
         #preview-container { margin-bottom: 25px; }
         
-        /* Espaciado extra solicitado de 40px para el resultado */
-        #resultado { margin-top: 40px; color: #333; font-size: 1.1rem; }
+        /* Espaciado extra de 40px para el panel de resultado */
+        #resultado { margin-top: 40px; }
 
         label { 
             display: block; 
@@ -103,10 +102,7 @@
             outline: none;
             font-family: 'Open Sans', sans-serif;
             background-color: white;
-            transition: all 0.3s;
         }
-
-        input:focus { border-color: #888; }
 
         .row { 
             display: grid; 
@@ -126,11 +122,7 @@
             font-family: 'Open Sans', sans-serif; 
             font-weight: 700;
             margin-top: 5px;
-            transition: all 0.3s;
         }
-
-        .btn-principal:hover { background: #333; transform: translateY(-2px); }
-        .btn-principal:active { transform: translateY(0); }
 
         @media (max-width: 450px) {
             .header-section h1 { font-size: 26px; }
@@ -152,12 +144,12 @@
         </div>
 
         <label>Función A Transformar</label>
-        <input id="funcion" placeholder="Ej: t^2 + sin(t)" type="text" oninput="actualizarTodo()">
+        <input id="funcion" placeholder="Ej: t^2 o 1/(s-1)" type="text" oninput="actualizarTodo()">
 
         <div class="row">
             <div>
                 <label>Operación</label>
-                <select id="tipo" onchange="sincronizarVariable(); actualizarTodo();">
+                <select id="tipo" onchange="autoVariable(); actualizarTodo();">
                     <option value="directa">Directa (t → s)</option>
                     <option value="inversa">Inversa (s → t)</option>
                 </select>
@@ -180,29 +172,22 @@
 </div>
 
 <script>
-// 1. Sincronización automática de variables
-function sincronizarVariable() {
+// Cambia la variable automáticamente según la operación
+function autoVariable() {
     const tipo = document.getElementById('tipo').value;
-    const variableSelect = document.getElementById('variable');
-    
-    if (tipo === 'directa') {
-        variableSelect.value = 't';
-    } else {
-        variableSelect.value = 's';
-    }
+    const varSelect = document.getElementById('variable');
+    varSelect.value = (tipo === 'directa') ? 't' : 's';
 }
 
-// 2. Normalización de entrada para Nerdamer
 function normalizar(expr) {
     if (!expr) return "";
     let e = expr.toLowerCase().replace(/\s+/g, '');
     e = e.replace(/π/g, 'pi');
-    // Forzamos que e^ sea tratado como exp() para evitar errores de variable
+    // Forzamos e^ a ser exp() para que Nerdamer no se confunda con variables
     e = e.replace(/e\^/g, 'exp');
     return e;
 }
 
-// 3. Vista previa en tiempo real
 function actualizarTodo() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
@@ -224,7 +209,6 @@ function actualizarTodo() {
     MathJax.typesetPromise([preview]);
 }
 
-// 4. CÁLCULO REAL (CORREGIDO)
 function calcularLaplace() {
     const input = document.getElementById('funcion').value.trim();
     const tipo = document.getElementById('tipo').value;
@@ -237,33 +221,28 @@ function calcularLaplace() {
         let f = normalizar(input);
         let sol;
 
+        // EJECUCIÓN DIRECTA DEL COMANDO NERDAMER
         if (tipo === 'directa') {
-            // Transformada de Laplace de f(v) hacia s
-            sol = nerdamer('laplace(' + f + ',' + v + ', s)');
+            // Laplace: de variable 'v' a 's'
+            sol = nerdamer(`laplace(${f}, ${v}, s)`);
         } else {
-            // Transformada Inversa de f(v) hacia t
-            // Usamos la función interna de Nerdamer 'ilt'
-            sol = nerdamer('ilt(' + f + ',' + v + ', t)');
+            // Inversa: de variable 'v' a 't'
+            sol = nerdamer(`ilt(${f}, ${v}, t)`);
         }
 
-        // Simplificamos y expandimos para que el resultado sea elegante
-        // y no una fracción racional gigante
-        let simplificado = nerdamer(sol.text()).simplify().expand();
+        // Simplificación: .simplify() agrupa términos y evita fracciones gigantes
+        let limpio = sol.simplify();
         
-        out.innerHTML = `$$ ${simplificado.toTeX()} $$`;
+        out.innerHTML = `$$ ${limpio.toTeX()} $$`;
         MathJax.typesetPromise([out]);
 
     } catch (e) { 
-        console.error(e);
-        out.innerHTML = "<small style='color:red'>Error: No se pudo procesar. Intenta con funciones más simples como 't' o '1/s'.</small>"; 
+        out.innerHTML = "<small style='color:red; font-family:Open Sans;'>Error: No se pudo procesar. Revisa si faltan paréntesis o el formato.</small>"; 
     }
 }
 
-// Inicialización al cargar
-window.onload = () => {
-    sincronizarVariable();
-    actualizarTodo();
-};
+// Iniciar con la variable correcta
+window.onload = autoVariable;
 </script>
 
 </body>
