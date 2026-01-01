@@ -32,10 +32,8 @@
             text-align: center;
         }
 
-        /* Espaciado de 45px entre botón y resultado */
         #resultado { margin-top: 45px; color: #333; }
 
-        /* Títulos: Solo la primera letra en mayúscula */
         label { display: block; font-size: 14px; color: #444; margin: 18px 0 6px 15px; font-weight: 600; }
         
         input, select {
@@ -52,6 +50,23 @@
             cursor: pointer; font-weight: 700; transition: 0.3s;
         }
         .btn-principal:disabled { background: #999; cursor: not-allowed; }
+
+        /* Estilos de Píldoras y Símbolos */
+        .pills-nav { display: flex; justify-content: center; gap: 8px; margin-top: 25px; flex-wrap: wrap; }
+        .pill { background: #e0e0e0; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.3s; font-weight: 600; color: #555; font-family: 'Open Sans', sans-serif; }
+        .pill.active { background: white; color: black; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .symbols-container { background: white; border-radius: 20px; padding: 15px; margin-top: 15px; border: 1px solid #ddd; }
+        .symbols-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+        .sym-btn { 
+            background: white; border: 1px solid #efefef; padding: 12px 5px; border-radius: 12px; 
+            text-align: center; cursor: pointer; transition: 0.2s; font-size: 14px; color: #333;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .sym-btn:hover { background: #f8f8f8; border-color: #ccc; }
+        .sym-btn span { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .sym-btn small { font-size: 9px; text-transform: uppercase; color: #888; font-weight: 700; }
 
         @media (max-width: 480px) { .row { grid-template-columns: 1fr; gap: 0; } }
     </style>
@@ -91,11 +106,127 @@
     <button onclick="resolver()" class="btn-principal" id="btn">Resolver Transformada</button>
 
     <div id="resultado">Esperando datos...</div>
+
+    <div class="pills-nav" id="pillsNav">
+        <button class="pill active" onclick="showCategory('directas', this)">Directas</button>
+        <button class="pill" onclick="showCategory('inversas', this)">Inversas</button>
+    </div>
+
+    <div id="symbolsPanel" class="symbols-container">
+        <div id="grid-content" class="symbols-grid"></div>
+    </div>
 </div>
 
 <script>
-// USAMOS TU APPID
 const APP_ID = "A947G495PV"; 
+
+// Configuración de categorías
+const categorias = {
+    directas: [
+        // ELEMENTALES
+        { s: '1', t: 'Constante' },
+        { s: 't', t: 'Lineal' },
+        { s: 't^2', t: 'Parabólica' },
+        { s: 't^n', t: 'Potencia n' },
+        { s: 'sqrt(t)', t: 'Raíz t' },
+        
+        // EXPONENCIALES
+        { s: 'exp(a*t)', t: 'Exponencial' },
+        { s: 't*exp(a*t)', t: 't * Exp' },
+        { s: 't^n*exp(a*t)', t: 't^n * Exp' },
+        
+        // TRIGONOMÉTRICAS
+        { s: 'sin(a*t)', t: 'Seno' },
+        { s: 'cos(a*t)', t: 'Coseno' },
+        { s: 'sin(a*t)^2', t: 'Seno²' },
+        { s: 'cos(a*t)^2', t: 'Coseno²' },
+        { s: 't*sin(a*t)', t: 't * Seno' },
+        { s: 't*cos(a*t)', t: 't * Coseno' },
+        
+        // HIPERBÓLICAS
+        { s: 'sinh(a*t)', t: 'Seno H.' },
+        { s: 'cosh(a*t)', t: 'Coseno H.' },
+        { s: 't*sinh(a*t)', t: 't * Seno H.' },
+        { s: 't*cosh(a*t)', t: 't * Coseno H.' },
+        
+        // TRASLACIÓN Y PRODUCTOS
+        { s: 'exp(a*t)*sin(b*t)', t: 'Exp * Seno' },
+        { s: 'exp(a*t)*cos(b*t)', t: 'Exp * Coseno' },
+        { s: 'exp(a*t)*sinh(b*t)', t: 'Exp * Seno H.' },
+        { s: 'exp(a*t)*cosh(b*t)', t: 'Exp * Coseno H.' },
+        
+        // FUNCIONES ESPECIALES
+        { s: 'heaviside(t-a)', t: 'Escalón (u)' },
+        { s: 'dirac(t-a)', t: 'Impulso (δ)' },
+        { s: 'exp(a*t)*heaviside(t-a)', t: 'Exp * Escalón' },
+        { s: 'sin(t)/t', t: 'Seno Integral' }
+    ],
+    inversas: [
+        // ELEMENTALES (s -> t)
+        { s: '1/s', t: 'Constante' },
+        { s: '1/s^2', t: 'Lineal (t)' },
+        { s: '1/s^n', t: 'Potencia t^(n-1)' },
+        { s: '1/s^(3/2)', t: 'Potencia Fracc.' },
+        
+        // EXPONENCIALES / TRASLACIÓN EN S
+        { s: '1/(s-a)', t: 'Exponencial' },
+        { s: '1/(s-a)^2', t: 't * Exp' },
+        { s: '1/(s-a)^n', t: 't^(n-1) * Exp' },
+        
+        // TRIGONOMÉTRICAS E HIPERBÓLICAS
+        { s: '1/(s^2+a^2)', t: 'Seno' },
+        { s: 's/(s^2+a^2)', t: 'Coseno' },
+        { s: '1/(s^2-a^2)', t: 'Seno H.' },
+        { s: 's/(s^2-a^2)', t: 'Coseno H.' },
+
+        // COMBINADAS (COMPLETAR CUADRADOS)
+        { s: '1/((s-a)^2+b^2)', t: 'Exp * Seno' },
+        { s: '(s-a)/((s-a)^2+b^2)', t: 'Exp * Coseno' },
+        { s: '1/((s-a)^2-b^2)', t: 'Exp * Seno H.' },
+        { s: '(s-a)/((s-a)^2-b^2)', t: 'Exp * Coseno H.' },
+
+        // FORMAS DE DERIVADA (s^2 en denom)
+        { s: '1/(s^2+a^2)^2', t: 'Seno Integral Form' },
+        { s: 's/(s^2+a^2)^2', t: 't * Seno' },
+        { s: 's^2/(s^2+a^2)^2', t: 'Seno + t*Cos' },
+
+        // TRASLACIÓN EN T (RETARDOS/ESCALÓN)
+        { s: 'exp(-a*s)/s', t: 'Escalón unitario' },
+        { s: 'exp(-a*s)/s^2', t: 'Rampa retardada' },
+        { s: 'exp(-a*s)/(s^2+k^2)', t: 'Seno retardado' },
+        { s: 'exp(-a*s)', t: 'Impulso δ(t-a)' },
+
+        // FRACCIONES PARCIALES COMUNES
+        { s: '1/(s*(s-a))', t: '1/s y Exp' },
+        { s: '1/((s-a)*(s-b))', t: 'Diferencia Exp' },
+        { s: 's/((s-a)*(s-b))', t: 'Suma Exp' },
+
+        // ESPECIALES
+        { s: 'log((s+a)/(s+b))', t: 'Logaritmo' },
+        { s: 'atan(a/s)', t: 'Arcotangente' }
+    ]
+};
+
+function showCategory(cat, btn) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const grid = document.getElementById('grid-content');
+    grid.innerHTML = '';
+    
+    categorias[cat].forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'sym-btn';
+        div.innerHTML = `<span>${item.s}</span><small>${item.t}</small>`;
+        div.onclick = () => {
+            document.getElementById('funcion').value = item.s;
+            // Cambiar el selector de tipo automáticamente según la categoría
+            document.getElementById('tipo').value = (cat === 'directas') ? "LaplaceTransform" : "InverseLaplaceTransform";
+            sincronizar();
+            actualizarPreview();
+        };
+        grid.appendChild(div);
+    });
+}
 
 function sincronizar() {
     const tipo = document.getElementById('tipo').value;
@@ -125,11 +256,9 @@ async function resolver() {
     btn.disabled = true;
 
     try {
-        // Construcción del comando para WolframAlpha
         const destino = (variable === 't') ? 's' : 't';
         const query = `${tipo}[${input}, ${variable}, ${destino}]`;
         
-        // Nuevo Proxy más estable: corsproxy.io
         const apiUri = `https://api.wolframalpha.com/v1/result?appid=${APP_ID}&i=${encodeURIComponent(query)}`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUri)}`;
 
@@ -142,7 +271,6 @@ async function resolver() {
         if (texto.includes("Error") || texto.includes("Invalid")) {
             out.innerHTML = "<span style='color:red'>Verifica tu AppID o la función.</span>";
         } else {
-            // Convertir texto de Wolfram a LaTeX real
             const latex = nerdamer(texto.replace(/ /g, '')).toTeX();
             out.innerHTML = `$$ ${latex} $$`;
         }
@@ -154,7 +282,10 @@ async function resolver() {
     }
 }
 
-window.onload = sincronizar;
+window.onload = () => {
+    sincronizar();
+    showCategory('directas', document.querySelector('.pill'));
+};
 </script>
 
 </body>
