@@ -233,17 +233,19 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     }
     
+/* --- CAMBIO PRINCIPAL: DE GRID A FLEX --- */
     .symbols-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
-        gap: 10px; 
+        display: flex;           /* Usamos Flexbox en lugar de Grid */
+        flex-wrap: wrap;         /* Permite que los elementos bajen de línea si no caben */
+        gap: 12px;               /* Espacio entre elementos */
+        justify-content: center; /* Centra los elementos horizontalmente */
     }
     
-   
     .sym-btn { 
         background: #fff; 
         border: 1px solid #eee; 
-        padding: 12px 5px; 
+        /* Aumentamos padding lateral para que el texto respire */
+        padding: 12px 18px;  
         border-radius: 15px; 
         text-align: center; 
         cursor: pointer; 
@@ -255,7 +257,13 @@
         align-items: center; 
         justify-content: center;
         font-family: 'Open Sans', sans-serif;
+        
+        /* --- ESTO HACE LA MAGIA --- */
+        flex: 0 1 auto; /* El ancho se adapta automáticamente al contenido */
+        min-width: 60px; /* Un ancho mínimo para que los símbolos cortos no se vean ridículos */
+        max-width: 100%; /* Asegura que no se salga de la pantalla en móviles */
     }
+    
     .sym-btn:hover { background: #f9f9f9; transform: translateY(-2px); border-color: #ddd; }
     .sym-btn span { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
     .sym-btn small { font-size: 9px; text-transform: uppercase; color: #999; font-weight: 700; }
